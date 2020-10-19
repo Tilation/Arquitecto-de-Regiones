@@ -14,14 +14,17 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Arquitecto_de_Regiones
-{
+{ 
     public partial class MainForm : Form
     {
         TestForm exampleForm;
         readonly string gpname = "gp";
+
         GraphicsPath graphicsPath;
         Region region;
+
         Region backupRegion;
+
         List<NodeRegion> NodeRegions => panelContenedor.Controls.OfType<NodeRegion>().ToList();
 
         readonly Dictionary<string, Color> otherLinters = new Dictionary<string, Color>
@@ -55,6 +58,7 @@ namespace Arquitecto_de_Regiones
         public MainForm()
         {
             InitializeComponent();
+
             backupRegion = panelRegion.Region;
             nodes = new List<Node>();
 
@@ -70,6 +74,7 @@ namespace Arquitecto_de_Regiones
             comboBox1.Items.Add(new RectangleNode());
             comboBox1.Items.Add(new CloseAllFiguresNode());
         }
+
 
         void UpdateGraphicsPath()
         {
@@ -89,11 +94,12 @@ namespace Arquitecto_de_Regiones
             else
             {
                 //  Si no hay nodos, se usa la region de respaldo
+                region = backupRegion;
                 panelRegion.Region = backupRegion;
             }
-
+            
             //  Finalmente se actualiza el formulario
-            UpdateExampleForm();
+            UpdateExampleForm(graphicsPath, panelRegion.Region);
         }
 
         void DeleteNode(Node n)
@@ -261,25 +267,20 @@ namespace Arquitecto_de_Regiones
             UpdateCodeOutput();
         }
 
-        void UpdateExampleForm()
+        void UpdateExampleForm(GraphicsPath gp, Region reg)
         {
-            if (graphicsPath == null && exampleForm != null)
+            if (gp == null && exampleForm != null)
             {
                 exampleForm.Dispose();
             }
             if (exampleForm != null && !exampleForm.IsDisposed)
             {
-                //Size newSize = new Size(
-                //    graphicsPath.GetBounds().ToRectangle().Size.Width + graphicsPath.GetBounds().ToRectangle().Location.X,
-                //    graphicsPath.GetBounds().ToRectangle().Size.Height + graphicsPath.GetBounds().ToRectangle().Location.Y
-                //);
                 Size newSize = new Size(
-                    (int)(graphicsPath.GetBounds().Width + graphicsPath.GetBounds().X),
-                    (int)(graphicsPath.GetBounds().Height + graphicsPath.GetBounds().Y)
+                    (int)(gp.GetBounds().Width + gp.GetBounds().X),
+                    (int)(gp.GetBounds().Height + gp.GetBounds().Y)
                 );
                 exampleForm.Bounds = new Rectangle(exampleForm.Bounds.Location, newSize);
-                //exampleForm.Bounds = new Rectangle(exampleForm.Bounds.Location, graphicsPath.GetBounds().ToRectangle().Size);
-                exampleForm.Region = region;
+                exampleForm.Region = reg;
             }
         }
         private void ShowExampleForm_Click(object sender, EventArgs e)
