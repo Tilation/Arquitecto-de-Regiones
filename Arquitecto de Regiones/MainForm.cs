@@ -74,8 +74,10 @@ namespace Arquitecto_de_Regiones
         void UpdateGraphicsPath()
         {
             graphicsPath = null;
+
             if (nodes.Count > 0)
             {
+                // Si hay nodos, se aplican y se crea una region nueva
                 graphicsPath = new GraphicsPath();
                 foreach (Node n in nodes)
                 {
@@ -86,33 +88,51 @@ namespace Arquitecto_de_Regiones
             }
             else
             {
+                //  Si no hay nodos, se usa la region de respaldo
                 panelRegion.Region = backupRegion;
             }
+
+            //  Finalmente se actualiza el formulario
             UpdateExampleForm();
         }
 
         void DeleteNode(Node n)
         {
-            NodeRegion nr = panelContenedor.Controls.OfType<NodeRegion>().Single(x => x.Nodo == n);
-            panelContenedor.Controls.Remove(nr);
-            nodes.Remove(n);
-            UpdateCodeOutput();
-            UpdateGraphicsPath();
+            if (nodes.Contains(n))
+            {
+                //  Buscar y remover el control de configuracion
+                NodeRegion nr = panelContenedor.Controls.OfType<NodeRegion>().Single(x => x.Nodo == n);
+                panelContenedor.Controls.Remove(nr);
+
+                //  Remover el nodo de la lista de nodos
+                nodes.Remove(n);
+
+                UpdateCodeOutput();
+                UpdateGraphicsPath();
+            }
         }
 
         void AgregarNodo(Node n, bool duplication = false)
         {
             if (n != null)
             {
+                // Si hay que duplicar, se duplica, sino se crea una nueva instancia del nodo seleccioando
                 Node nodo = (duplication == true) ? n : n.NewInstance();
+
                 nodes.Add(nodo);
+
+                //  Se crea un nuevo control para poder configurar el nodo
                 NodeRegion nr = new NodeRegion(nodo);
                 panelContenedor.Controls.Add(nr);
+
+                //  Se registran los eventos del nuevo control configurador
                 nr.DeleteButtonClick += DeleteNode;
                 nr.DuplicateButtonClick += DuplicateNode;
                 nr.MoveNodeDown += MoveNodeDown;
                 nr.MoveNodeUp += MoveNodeUp;
                 nr.NodesChanged += NodesChanged;
+
+                //  Se actualizan las salidas de codigo y graficos
                 UpdateCodeOutput();
                 UpdateGraphicsPath();
             }
@@ -121,8 +141,11 @@ namespace Arquitecto_de_Regiones
         private void MoveNodeUp(Node node)
         {
             int nodeInd = nodes.IndexOf(node);
+
+            //  Si no esta arriba del todo, se mueve
             if (nodeInd > 0)
             {
+                // Se busca el nodo anterior y se aplica el intercambio
                 int previousInd = nodeInd - 1;
                 Node prev = nodes[previousInd];
                 NodeRegion prevNR = NodeRegions.Single(x => x.Nodo == prev);
@@ -131,16 +154,21 @@ namespace Arquitecto_de_Regiones
                 currNR.Nodo = prev;
                 nodes[previousInd] = node;
                 nodes[nodeInd] = prev;
+
+                UpdateCodeOutput();
+                UpdateGraphicsPath();
             }
-            UpdateCodeOutput();
-            UpdateGraphicsPath();
         }
 
         private void MoveNodeDown(Node node)
         {
             int nodeInd = nodes.IndexOf(node);
+
+            //  Si no esta abajo del todo
             if (nodeInd < nodes.Count - 1)
             {
+
+                // Se busca el nodo proximo y se aplica el intercambio
                 int nextInd = nodeInd + 1;
                 Node next = nodes[nextInd];
                 NodeRegion nextNR = NodeRegions.Single(x => x.Nodo == next);
@@ -149,10 +177,10 @@ namespace Arquitecto_de_Regiones
                 currNR.Nodo = next;
                 nodes[nextInd] = node;
                 nodes[nodeInd] = next;
+
+                UpdateCodeOutput();
+                UpdateGraphicsPath();
             }
-            UpdateCodeOutput();
-            UpdateGraphicsPath();
-            
         }
 
         private void DuplicateNode(Node n)
@@ -168,17 +196,25 @@ namespace Arquitecto_de_Regiones
             UpdateCodeOutput();
         }
 
+        /// <summary>
+        /// Genera el código responsable de recrear la región diseñada
+        /// </summary>
         private void UpdateCodeOutput()
         {
+            // Creación de un buffer temporal
             RichTextBox rtb = new RichTextBox();
-            //richTextBoxCode.Text = "";
+
             rtb.AppendLine($"GraphicsPath {gpname} = new GraphicsPath();");
+
+            //  Por cada nodo agregado, se genera su código C#
             foreach(Node n in nodes)
             {
                 rtb.AppendLine(n.GenerateCode(gpname));
             }
+
             rtb.AppendLine($"Region region = new Region({gpname});");
 
+            //  Si estamos usando el formulario de ejemplo, crear el código para él también
             if (exampleForm != null && exampleForm.Visible)
             {
                 rtb.AppendLine($"Form form = new Form();");
@@ -192,19 +228,26 @@ namespace Arquitecto_de_Regiones
                 rtb.AppendLine($"form.Region = region;");
                 rtb.AppendLine($"form.Show();");
             }
+
+            // Suspendemos la actualizacion del control para prevenir flickering temporalmente 
+            richTextBoxCode.SuspendLayout();
             richTextBoxCode.Text = rtb.Text;
-            LinterText();
+            LinterText(richTextBoxCode);
+            richTextBoxCode.ResumeLayout();
         }
 
-        void LinterText()
+        /// <summary>
+        /// Encargado de marcar la sintaxis en el RichTextBox
+        /// </summary>
+        void LinterText(RichTextBox rtb)
         {
             foreach (Node n in comboBox1.Items)
             {
-                richTextBoxCode.ColorizePattern(n.Keyword.Item1, n.Keyword.Item2, FontStyle.Bold);
+                rtb.ColorizePattern(n.Keyword.Item1, n.Keyword.Item2, FontStyle.Bold);
             }
             foreach (KeyValuePair<string,Color> s in otherLinters)
             {
-                richTextBoxCode.ColorizePattern(s.Key, s.Value, FontStyle.Bold);
+                rtb.ColorizePattern(s.Key, s.Value, FontStyle.Bold);
             }
         }
 
@@ -217,6 +260,7 @@ namespace Arquitecto_de_Regiones
         {
             UpdateCodeOutput();
         }
+
         void UpdateExampleForm()
         {
             if (graphicsPath == null && exampleForm != null)
@@ -225,10 +269,14 @@ namespace Arquitecto_de_Regiones
             }
             if (exampleForm != null && !exampleForm.IsDisposed)
             {
+                //Size newSize = new Size(
+                //    graphicsPath.GetBounds().ToRectangle().Size.Width + graphicsPath.GetBounds().ToRectangle().Location.X,
+                //    graphicsPath.GetBounds().ToRectangle().Size.Height + graphicsPath.GetBounds().ToRectangle().Location.Y
+                //);
                 Size newSize = new Size(
-    graphicsPath.GetBounds().ToRectangle().Size.Width + graphicsPath.GetBounds().ToRectangle().Location.X,
-    graphicsPath.GetBounds().ToRectangle().Size.Height + graphicsPath.GetBounds().ToRectangle().Location.Y
-    );
+                    (int)(graphicsPath.GetBounds().Width + graphicsPath.GetBounds().X),
+                    (int)(graphicsPath.GetBounds().Height + graphicsPath.GetBounds().Y)
+                );
                 exampleForm.Bounds = new Rectangle(exampleForm.Bounds.Location, newSize);
                 //exampleForm.Bounds = new Rectangle(exampleForm.Bounds.Location, graphicsPath.GetBounds().ToRectangle().Size);
                 exampleForm.Region = region;
@@ -240,12 +288,11 @@ namespace Arquitecto_de_Regiones
             {
                 if (exampleForm == null || exampleForm.IsDisposed)
                 {
-                    
                     exampleForm = new TestForm();
                     exampleForm.Region = region;
                     Size newSize = new Size(
-                        (int)(graphicsPath.GetBounds().Size.Width + graphicsPath.GetBounds().Location.X),
-                        (int)(graphicsPath.GetBounds().Size.Height + graphicsPath.GetBounds().Location.Y)
+                        (int)(graphicsPath.GetBounds().Size.Width + graphicsPath.GetBounds().X),
+                        (int)(graphicsPath.GetBounds().Size.Height + graphicsPath.GetBounds().Y)
                         );
                     exampleForm.Bounds = new Rectangle(exampleForm.Bounds.Location, newSize);
                     exampleForm.Show();
