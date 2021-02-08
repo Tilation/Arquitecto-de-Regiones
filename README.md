@@ -11,7 +11,10 @@ It's a companion for C# developers, who wants to create custom rendering regions
 Will I still have to write the messy GraphicsPath code?
 Nope, the tool has a C# code generator that will output the exact lines of code to reproduce what you have created. (You still need to have some creativity though)
 
+The textBox that has the syntax highlighting also is made by me, you can check some of my controls [over here](https://github.com/Tilation/TilationControls/wiki)
+
 This is an internal tool I'm developing for my own projects, and I figured that if it was useful for me, well, it surely would for some of you :)
+Here are some examples and images from the tool itself.
 
 ![1](https://github.com/Tilation/ImagenesPublicas/blob/main/RegionArchitect/1.png)
 
@@ -20,5 +23,7 @@ This is an internal tool I'm developing for my own projects, and I figured that 
 ![3](https://github.com/Tilation/ImagenesPublicas/blob/main/RegionArchitect/3.png)
 
 ![4](https://github.com/Tilation/ImagenesPublicas/blob/main/RegionArchitect/4.png)
+
+
 
 ![5](https://github.com/Tilation/ImagenesPublicas/blob/main/RegionArchitect/5.jpeg)
