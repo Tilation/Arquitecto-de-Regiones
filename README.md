@@ -1,4 +1,4 @@
-# Arquitecto-de-Regiones
+# Region Architect
 As a C# WinForms developer, one eventually come across this problem:
 
 I want my form to have round corners. But how?
